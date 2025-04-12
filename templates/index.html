@@ -6,7 +6,6 @@
         <table class="table">
             <thead class="thead-dark">
                 <tr>
-                    <th scope="col">ID</th>
                     <th scope="col">Date</th>
                     <th scope="col">Type</th>
                     <th scope="col">Category</th>
@@ -17,15 +16,51 @@
             <tbody>
                 {% for entry in accounts %}
                         <tr>
-                            <th scope="row">{{loop.index}}</th>
                             <td>{{entry.date.strftime("%m-%d-%Y")}}</td>
                             <td>{{entry.type}}</td>
                             <td>{{ entry.category }}</td>
                             <td>{{ (entry.amount|round(2)|string).rstrip('.0') }}</td>
-                            <td><a href="/" class="btn btn-outline-danger btn-sm">Delete</a></td>
+                            <td>
+                                <div>
+                                    <a href="/accounts/{{ entry.id }}" class="btn btn-warning">
+                                        Edit
+                                    </a>
+                                    <a onclick="showDeleteModal({{ entry.id }})" class="btn btn-danger">
+                                        Remove
+                                    </a>
+                                </div>
+                            </td>
                         </tr>
                 {% endfor %}
         </tbody>
         </table>
+         <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="deleteModalLabel">Removing a record</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                      <p>Do you really want to remove record №<span id="deleteModalId">%id%</span>?</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a id="deleteModalBtn" href="" class="btn btn-danger">REMOVE</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
     </div>
+
+    <script>
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        function showDeleteModal(id) {
+            document.getElementById('deleteModalId').innerText = '' + id;
+            document.getElementById('deleteModalBtn').setAttribute('href', `/account_delete/${id}`);
+            deleteModal.show();
+        }
+    </script>
+
 {% endblock %}

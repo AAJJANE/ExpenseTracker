@@ -19,7 +19,7 @@ login_manager.init_app(app)
 @app.route('/')
 def index():
     db_sess = db_session.create_session()
-    accounts = db_sess.query(Accounts).order_by(Accounts.date.asc())
+    accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
     return render_template('index.html', title='Expenses', accounts=accounts)
 
 
@@ -40,6 +40,18 @@ def add_account():
         flash("Account added successfully!", 'success')
         return redirect('/')
     return render_template('_base_form.html', title='Add an account', form=form)
+
+
+@app.route('/account_delete/<int:_id>')
+@login_required
+def account_delete(_id):
+    db_sess = db_session.create_session()
+    account = db_sess.get(Accounts, _id)
+    if account is None:
+        abort(404)
+    db_sess.delete(account)
+    db_sess.commit()
+    return redirect('/')
 
 
 @login_manager.user_loader
