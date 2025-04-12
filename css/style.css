@@ -1,0 +1,40 @@
+#form-selection {
+    background-color: #ffdab9;
+    padding: 15px;
+    border-radius: 15px;
+    border: solid 1px #333;
+}
+
+#form-selection input[type=file].form-control {
+    background: inherit;
+    border: none;
+}
+
+form {
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: #ffdab9;
+    padding: 15px;
+    border-radius: 15px;
+    border: solid 1px #333;
+    margin-bottom: 20px;
+}
+
+form ul.form-check li {
+    display: block;
+}
+
+form input.form-control[type=file] {
+    background: inherit;
+    border: inherit;
+}
+
+h4 {
+    padding-left: 20px;
+    color: #555555;
+}
+
+h2.emblem::before {
+    content: url(http://127.0.0.1:8080/static/img/MARS-2-7.png);
+    padding-right: 10px;
+}

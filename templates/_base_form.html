@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 class="text-center emblem">{{ title }}</h2>
+    <h3 class="text-center">{{ subtitle }}</h3>
+    {% if message %}
+        <div class="alert alert-danger text-center" role="alert">
+            {{ message }}
+        </div>
+    {% endif %}
+    <form action="" method="post">
+        <div>
+            {{ form.csrf_token }}
+        </div>
+        {% for field in form if field.name != 'csrf_token' %}
+            <div class="mb-3">
+                {% if field.type == 'SubmitField' %}
+                    {{ field(class="btn btn-primary w-100") }}
+                {% elif field.type == 'BooleanField' %}
+                    <div class="form-check">
+                        {{ field(class="form-check-input") }}
+                        {{ field.label(class="form-check-label") }}
+                    </div>
+                {% elif field.type == 'RadioField' %}
+                    {{ field.label(class="form-label") }}
+                    {{ field(class="form-check") }}
+                {% else %}
+                    {% if field.label.text %}
+                        {{ field.label(class="form-label") }}
+                    {% endif %}
+                    {{ field(class="form-control") }}
+                {% endif %}
+
+                {% for error in field.errors %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </form>
+{% endblock %}
