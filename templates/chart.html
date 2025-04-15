@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md">
+                <h1>Incomes to Expenses Ratio</h1>
+                    <div id="chart-container1" class="chart-div">
+                        {{ charts_html1 |safe }}
+                    </div>
+                </div>
+            <div class="col-md">
+                <h1 align="center">Incomes in a time period</h1>
+                    <div id="chart-container2" class="chart-div1">
+                        {{ charts_html2 |safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md">
+                <h1>Expenses in a time period</h1>
+                    <div id="chart-container3" class="chart-div2">
+                        {{ charts_html3 |safe }}
+                    </div>
+                </div>
+            <div class="col-md">
+                <h1>Categories of Income</h1>
+                    <div id="chart-container4" class="chart-div2">
+                        {{ charts_html4 |safe }}
+                    </div>
+                </div>
+            </div>
+    <div class="row">
+            <div class="col-md">
+                <h1>Categories of Expense</h1>
+                    <div id="chart-container5" class="chart-div2">
+                        {{ charts_html5 |safe }}
+                    </div>
+                </div>
+        </div>
+
+{% endblock %}

@@ -10,6 +10,21 @@
     border: none;
 }
 
+.chart-div {
+    max-width: 500px;
+    max-height: 500px;
+}
+
+.chart-div1 {
+    width: 710px;
+    height: 600px;
+}
+
+.chart-div2 {
+    width: 610px;
+    height: 500px;
+}
+
 form {
     max-width: 480px;
     margin: 0 auto;

@@ -1,15 +1,22 @@
 import datetime
-
+import json
+from decimal import Decimal
+from requests import get
 from flask import Flask, render_template, request, redirect, abort, make_response, jsonify, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from pychartjs.charts import Chart
+from pychartjs.datasets import Dataset
+from pychartjs.enums import ChartType
+from pychartjs.options import ChartOptions, Legend, Title
 
 from data import __db_session as db_session
 from data.accounts import Accounts
-
+from sqlalchemy import create_engine, Column, Integer, String, func
 from forms import (LoginForm, ExtraLoginForm, RegisterForm)
 
 from data.users import User
 from forms.accountform import AddAccountForm
+from utils import format_amount, create_chart, generate_color
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -22,6 +29,90 @@ def index():
     accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
     return render_template('index.html', title='Expenses', accounts=accounts)
 
+@app.route('/dashboard')
+def dashboard():
+    db_sess = db_session.create_session()
+
+    # --- data ---
+
+    income_expense_ratio = format_amount((db_sess.query(func.sum(Accounts.amount), Accounts.type)
+                                          .filter(Accounts.user == current_user.id).group_by(
+                         Accounts.type).order_by(Accounts.type).all()))
+
+    incomes = format_amount((db_sess.query(func.sum(Accounts.amount), Accounts.category)
+               .filter(Accounts.user == current_user.id, Accounts.type == 'income').group_by(
+        Accounts.category).order_by(Accounts.category).all()))
+
+    expenses = format_amount((db_sess.query(func.sum(Accounts.amount), Accounts.category)
+                             .filter(Accounts.user == current_user.id, Accounts.type == 'expense').group_by(
+        Accounts.category).order_by(Accounts.category).all()))
+
+    dates_income = (db_sess.query(func.sum(Accounts.amount), Accounts.date)
+                    .filter(Accounts.user == current_user.id, Accounts.type == 'income').group_by(
+        Accounts.date).order_by(Accounts.date).all())
+    dates_expense = (db_sess.query(func.sum(Accounts.amount), Accounts.date)
+                    .filter(Accounts.user == current_user.id, Accounts.type == 'expense').group_by(
+        Accounts.date).order_by(Accounts.date).all())
+
+    over_time_incomes = []
+    over_time_expenses = []
+    dates_label_inc = []
+    dates_label_exp = []
+
+
+    for amount, date in dates_income:
+        dates_label_inc.append(date.strftime("%m-%d-%y"))
+        over_time_incomes.append(float(amount))
+
+    for amount, date in dates_expense:
+        dates_label_exp.append(date.strftime("%m-%d-%y"))
+        over_time_expenses.append(float(amount))
+
+    # --- charts ---
+    incomes_expense_chart = create_chart("Incomes to expenses ratio",
+                                 data=[income_expense_ratio[0][0], income_expense_ratio[1][0]],
+                                 background_col=['rgb(97, 75, 195)',
+                                                 'rgb(51, 187, 197)'],
+                                 labels=['Expense', 'Income'],
+                                 chart_type='PIE')
+
+    time_incomes_chart = create_chart("Incomes in a time period",
+                                      data=over_time_incomes,
+                                      background_col='rgb(97, 75, 195)',
+                                      labels=dates_label_inc,
+                                      chart_type='LINE',
+                                      border_color='rgb(97, 75, 195)')
+    time_expenses_chart = create_chart("Expenses in a time period",
+                                       data=over_time_expenses,
+                                       background_col='rgb(51, 187, 197)',
+                                       labels=dates_label_exp,
+                                       chart_type='LINE',
+                                       border_color='rgb(51, 187, 197)')
+
+    incomes_chart = create_chart("Incomes based on categories",
+                                 data=[i[0] for i in incomes],
+                                 background_col=generate_color(len(incomes)),
+                                 labels=[i[1].capitalize() for i in incomes],
+                                 chart_type='BAR')
+
+    expenses_chart = create_chart("Expenses based on categories",
+                                  data=[i[0] for i in expenses],
+                                  background_col=generate_color(len(incomes)),
+                                  labels=[i[1].capitalize() for i in expenses],
+                                  chart_type='BAR')
+
+    chart1 = incomes_expense_chart.render()
+    chart2 = time_incomes_chart.render()
+    chart3 = time_expenses_chart.render()
+    chart4 = incomes_chart.render()
+    chart5 = expenses_chart.render()
+
+    return render_template("chart.html",
+                           charts_html1=chart1,
+                           charts_html2=chart2,
+                           charts_html3=chart3,
+                           charts_html4=chart4,
+                           charts_html5=chart5,)
 
 @app.route('/add_account', methods=['GET', 'POST'])
 def add_account():
@@ -40,6 +131,30 @@ def add_account():
         flash("Account added successfully!", 'success')
         return redirect('/')
     return render_template('_base_form.html', title='Add an account', form=form)
+
+@app.route('/accounts/<int:_id>', methods=['GET', 'POST'])
+@login_required
+def edit_account(_id):
+    db_sess = db_session.create_session()
+    account = db_sess.get(Accounts, _id)
+    if account is None:
+        abort(404)
+    form = AddAccountForm()
+
+    if request.method == "GET":
+        form.type.data = account.type
+        form.category.data = account.category
+        form.date.data = account.date
+        form.amount.data = account.amount
+        return render_template('_base_form.html', title='Editing job', form=form)
+    if form.validate() and request.method == 'POST':
+        account.type = form.type.data
+        account.category = form.category.data
+        account.date = form.date.data
+        account.amount = form.amount.data
+        db_sess.merge(account)
+        db_sess.commit()
+        return redirect('/')
 
 
 @app.route('/account_delete/<int:_id>')
@@ -78,7 +193,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect("/")
+    return redirect("/login")
 
 
 @app.route('/register', methods=['GET', 'POST'])

@@ -10,13 +10,7 @@ class AddAccountForm(FlaskForm):
     type = SelectField('Type', validators=[DataRequired()],
                                 choices=[('income', 'income'),
                                         ('expense', 'expense')])
-    category = SelectField("Category", validators=[DataRequired()],
-                                            choices =[('rent', 'rent'),
-                                            ('salary', 'salary'),
-                                            ('investment', 'investment'),
-                                            ('gifts', 'gifts')
-                                            ]
-                            )
+    category = StringField("Category", validators=[DataRequired()])
     date = DateField('Date', validators=[InputRequired()])
     amount = DecimalField('Amount', validators = [DataRequired()])
     submit = SubmitField('Generate Report')
