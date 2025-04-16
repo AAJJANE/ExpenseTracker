@@ -11,12 +11,12 @@ def format_amount(data):
     return res
 
 
-def create_chart(label, data, background_col, labels, chart_type, border_color='rgb(0, 0, 0)'):
+def create_chart(label, data, background_col, labels, chart_type, border_width=2, border_color='rgb(0, 0, 0)'):
     dataset = Dataset(
         label=label,
         data=data,
         backgroundColor=background_col,
-        borderWidth=1,
+        borderWidth=border_width,
         borderColor=border_color
     )
 

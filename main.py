@@ -23,13 +23,23 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-@app.route('/')
+@app.route('/home')
+@login_required
 def index():
     db_sess = db_session.create_session()
     accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
     return render_template('index.html', title='Expenses', accounts=accounts)
 
+@app.route('/')
+def start():
+    return render_template('unauthorized.html')
+
+@app.errorhandler(401)
+def unauthorized(error):
+    return render_template('unauthorized.html')
+
 @app.route('/dashboard')
+@login_required
 def dashboard():
     db_sess = db_session.create_session()
 
@@ -69,37 +79,43 @@ def dashboard():
         over_time_expenses.append(float(amount))
 
     # --- charts ---
-    incomes_expense_chart = create_chart("Incomes to expenses ratio",
-                                 data=[income_expense_ratio[0][0], income_expense_ratio[1][0]],
-                                 background_col=['rgb(97, 75, 195)',
-                                                 'rgb(51, 187, 197)'],
-                                 labels=['Expense', 'Income'],
-                                 chart_type='PIE')
+    try:
+        incomes_expense_chart = create_chart("Incomes to expenses ratio",
+                                     data=[income_expense_ratio[0][0], income_expense_ratio[1][0]],
+                                     background_col=['rgb(97, 75, 195)',
+                                                     'rgb(51, 187, 197)'],
+                                     labels=['Expense', 'Income'],
+                                     chart_type='PIE')
 
-    time_incomes_chart = create_chart("Incomes in a time period",
-                                      data=over_time_incomes,
-                                      background_col='rgb(97, 75, 195)',
-                                      labels=dates_label_inc,
-                                      chart_type='LINE',
-                                      border_color='rgb(97, 75, 195)')
-    time_expenses_chart = create_chart("Expenses in a time period",
-                                       data=over_time_expenses,
-                                       background_col='rgb(51, 187, 197)',
-                                       labels=dates_label_exp,
-                                       chart_type='LINE',
-                                       border_color='rgb(51, 187, 197)')
+        time_incomes_chart = create_chart("Incomes in a time period",
+                                          data=over_time_incomes,
+                                          background_col='rgb(97, 75, 195)',
+                                          labels=dates_label_inc,
+                                          chart_type='LINE',
+                                          border_color='rgb(97, 75, 195)',
+                                          border_width=5)
+        time_expenses_chart = create_chart("Expenses in a time period",
+                                           data=over_time_expenses,
+                                           background_col='rgb(51, 187, 197)',
+                                           labels=dates_label_exp,
+                                           chart_type='LINE',
+                                           border_color='rgb(51, 187, 197)',
+                                           border_width=5)
 
-    incomes_chart = create_chart("Incomes based on categories",
-                                 data=[i[0] for i in incomes],
-                                 background_col=generate_color(len(incomes)),
-                                 labels=[i[1].capitalize() for i in incomes],
-                                 chart_type='BAR')
+        incomes_chart = create_chart("Incomes based on categories",
+                                     data=[i[0] for i in incomes],
+                                     background_col=generate_color(len(incomes)),
+                                     labels=[i[1].capitalize() for i in incomes],
+                                     chart_type='BAR')
 
-    expenses_chart = create_chart("Expenses based on categories",
-                                  data=[i[0] for i in expenses],
-                                  background_col=generate_color(len(incomes)),
-                                  labels=[i[1].capitalize() for i in expenses],
-                                  chart_type='BAR')
+        expenses_chart = create_chart("Expenses based on categories",
+                                      data=[i[0] for i in expenses],
+                                      background_col=generate_color(len(incomes)),
+                                      labels=[i[1].capitalize() for i in expenses],
+                                      chart_type='BAR')
+    except IndexError:
+        return render_template("error.html",
+                           error='Not enough data to build your charts :(')
 
     chart1 = incomes_expense_chart.render()
     chart2 = time_incomes_chart.render()
@@ -114,7 +130,9 @@ def dashboard():
                            charts_html4=chart4,
                            charts_html5=chart5,)
 
+
 @app.route('/add_account', methods=['GET', 'POST'])
+@login_required
 def add_account():
     form = AddAccountForm()
     if form.validate_on_submit():
@@ -129,7 +147,7 @@ def add_account():
         db_sess.merge(account)
         db_sess.commit()
         flash("Account added successfully!", 'success')
-        return redirect('/')
+        return redirect('/home')
     return render_template('_base_form.html', title='Add an account', form=form)
 
 @app.route('/accounts/<int:_id>', methods=['GET', 'POST'])
@@ -154,7 +172,7 @@ def edit_account(_id):
         account.amount = form.amount.data
         db_sess.merge(account)
         db_sess.commit()
-        return redirect('/')
+        return redirect('/home')
 
 
 @app.route('/account_delete/<int:_id>')
@@ -166,7 +184,7 @@ def account_delete(_id):
         abort(404)
     db_sess.delete(account)
     db_sess.commit()
-    return redirect('/')
+    return redirect('/home')
 
 
 @login_manager.user_loader
@@ -182,7 +200,7 @@ def login():
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            return redirect("/")
+            return redirect("/home")
         return render_template('_base_form.html',
                                message="Неправильный логин или пароль",
                                form=form)

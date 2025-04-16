@@ -21,8 +21,13 @@
 }
 
 .chart-div2 {
-    width: 610px;
+    width: 635px;
     height: 500px;
+}
+
+.chart-div3 {
+    width: 700px;
+    height: 700px;
 }
 
 form {
