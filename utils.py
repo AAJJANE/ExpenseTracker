@@ -1,7 +1,8 @@
 from pychartjs.charts import Chart
 from pychartjs.datasets import Dataset
-from pychartjs.enums import ChartType
 from requests import get
+from pychartjs.enums import ChartType
+from config import COLOR_URL_BASE
 
 
 def format_amount(data):
@@ -11,7 +12,7 @@ def format_amount(data):
     return res
 
 
-def create_chart(label, data, background_col, labels, chart_type, border_width=2, border_color='rgb(0, 0, 0)'):
+def create_chart(label, data, background_col, labels, chart_type_user, border_width=2, border_color='rgb(188, 205, 228)'):
     dataset = Dataset(
         label=label,
         data=data,
@@ -22,7 +23,7 @@ def create_chart(label, data, background_col, labels, chart_type, border_width=2
 
     chart = Chart(
         labels=labels,
-        chart_type=eval(f'ChartType.{chart_type}'),
+        chart_type=eval(f'ChartType.{chart_type_user}'),
         datasets=[dataset],
     )
 
@@ -31,6 +32,6 @@ def create_chart(label, data, background_col, labels, chart_type, border_width=2
 def generate_color(n):
     colors = []
     for i in range(n):
-        i = get('https://x-colors.yurace.pro/api/random').json()
+        i = get(COLOR_URL_BASE).json()
         colors.append(i['rgb'])
     return colors

@@ -8,7 +8,7 @@
             {{ message }}
         </div>
     {% endif %}
-    <form action="" method="post">
+    <form action="" method="post" enctype="multipart/form-data">
         <div>
             {{ form.csrf_token }}
         </div>
@@ -30,11 +30,16 @@
                     {% endif %}
                     {{ field(class="form-control") }}
                 {% endif %}
-
                 {% for error in field.errors %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endfor %}
             </div>
         {% endfor %}
+        {% if pfp %}
+            <figure>
+                <img src="{{ url_for('static', filename='img/' ~ pfp) }}" alt="Profile Picture" width="200">
+                <figcaption>Your previous profile picture</figcaption>
+            </figure>
+        {% endif %}
     </form>
 {% endblock %}

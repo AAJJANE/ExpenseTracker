@@ -8,7 +8,6 @@ from .__db_session import SqlAlchemyBase, create_session
 
 
 class Accounts(SqlAlchemyBase):
-
     __tablename__ = 'accounts'
 
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)

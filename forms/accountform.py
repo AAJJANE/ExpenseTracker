@@ -12,5 +12,5 @@ class AddAccountForm(FlaskForm):
                                         ('expense', 'expense')])
     category = StringField("Category", validators=[DataRequired()])
     date = DateField('Date', validators=[InputRequired()])
-    amount = DecimalField('Amount', validators = [DataRequired()])
+    amount = DecimalField('Amount', validators = [DataRequired(), NumberRange(min=0)])
     submit = SubmitField('Generate Report')
