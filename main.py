@@ -1,12 +1,14 @@
+import asyncio
 import datetime
 import os
+from threading import Thread
 
-from flask import Flask, render_template, request, redirect, abort, flash
+from flask import Flask, render_template, request, redirect, abort, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from sqlalchemy import func
 from werkzeug.utils import secure_filename
 
-from ai import ai_review
+from ai import ai_review_async
 from data import __db_session as db_session
 from data.accounts import Accounts
 from data.users import User
@@ -21,18 +23,27 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+ai_cache = {}
+
+def run_async_task(user_id, incomes, expenses):
+    async def task_wrapper():
+        result = await ai_review_async(incomes, expenses)
+        ai_cache[user_id] = result
+    asyncio.run(task_wrapper())
 
 @app.route('/home')
 @login_required
 def index():
     db_sess = db_session.create_session()
     accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
+    ai_cache.clear()
     return render_template('index.html', title='Expense Tracker', accounts=accounts)
 
 
 @app.route('/')
 def start():
     if current_user.is_authenticated:
+        ai_cache.clear()
         return redirect('/home')
     return render_template('unauthorized.html', title='Unauthorized')
 
@@ -113,7 +124,12 @@ def dashboard():
     chart4 = incomes_chart.render()
     chart5 = expenses_chart.render()
 
-    ai_summary = ai_review(income_expense_ratio[1][0], income_expense_ratio[0][0])
+    if current_user.id not in ai_cache:
+        Thread(target=run_async_task, args=(
+            current_user.id,
+            income_expense_ratio[1][0],
+            income_expense_ratio[0][0]
+        )).start()
 
     return render_template("chart.html",
                            charts_html1=chart1,
@@ -121,13 +137,19 @@ def dashboard():
                            charts_html3=chart3,
                            charts_html4=chart4,
                            charts_html5=chart5,
-                           ai_summary=ai_summary,
+                           ai_summary=ai_cache.get(current_user.id),
                            title='Dashboard', )
+
+@app.route('/get_ai_summary')
+@login_required
+def get_ai_summary():
+    return jsonify({"summary": ai_cache.get(current_user.id, "Summary is being generated...")})
 
 
 @app.route('/add_account', methods=['GET', 'POST'])
 @login_required
 def add_account():
+    ai_cache.clear()
     form = AddAccountForm()
     if form.validate_on_submit():
         if datetime.date.today() < datetime.datetime.strptime(form.date.data.strftime('%Y-%m-%d'),
@@ -154,6 +176,7 @@ def add_account():
 @app.route('/accounts/<int:_id>', methods=['GET', 'POST'])
 @login_required
 def edit_account(_id):
+    ai_cache.clear()
     db_sess = db_session.create_session()
     account = db_sess.get(Accounts, _id)
     if account is None:
@@ -179,6 +202,7 @@ def edit_account(_id):
 @app.route('/account_delete/<int:_id>')
 @login_required
 def account_delete(_id):
+    ai_cache.clear()
     db_sess = db_session.create_session()
     account = db_sess.get(Accounts, _id)
     if account is None:
@@ -196,6 +220,7 @@ def load_user(user_id: id) -> User | None:
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    ai_cache.clear()
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
@@ -214,6 +239,7 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
+    ai_cache.clear()
     logout_user()
     flash("Logged out successfully", 'success')
     return redirect("/login")

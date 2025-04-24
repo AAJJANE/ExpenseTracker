@@ -2,7 +2,9 @@
 
 {% block content %}
     <div class="container">
-        <p>{{ ai_summary }}</p>
+        <div id="ai-summary">
+            {{ ai_summary if ai_summary else "AI summary is loading..." }}
+        </div>
         <div class="row">
             <div class="col-md">
                 <h1>Incomes to Expenses Ratio</h1>
@@ -40,5 +42,21 @@
                     </div>
                 </div>
         </div>
+<script>
+
+  function pollAISummary() {
+    fetch('/get_ai_summary')
+      .then(response => response.json())
+      .then(data => {
+        if (data.summary !== "Summary is being generated...") {
+          document.getElementById('ai-summary').innerHTML = data.summary;
+        } else {
+          setTimeout(pollAISummary, 1000); // Poll every second
+        }
+      });
+  }
+  // Start polling when the page loads
+  window.addEventListener('load', pollAISummary);
+</script>
 
 {% endblock %}
