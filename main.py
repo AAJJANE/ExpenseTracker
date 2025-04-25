@@ -37,7 +37,7 @@ def index():
     db_sess = db_session.create_session()
     accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
     ai_cache.clear()
-    return render_template('index.html', title='Expense Tracker', accounts=accounts)
+    return render_template('index.html', title='Finance Tracker', accounts=accounts)
 
 
 @app.route('/')

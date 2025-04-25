@@ -51,11 +51,10 @@
         if (data.summary !== "Summary is being generated...") {
           document.getElementById('ai-summary').innerHTML = data.summary;
         } else {
-          setTimeout(pollAISummary, 1000); // Poll every second
+          setTimeout(pollAISummary, 1000);
         }
       });
   }
-  // Start polling when the page loads
   window.addEventListener('load', pollAISummary);
 </script>
 
