@@ -10,6 +10,22 @@
     border: none;
 }
 
+.navbar-brand {
+    margin-left: 10px;
+}
+
+.nav-item {
+    margin-top: 10px;
+}
+
+#sign-up {
+    margin-top: 10px;
+}
+
+#login {
+    margin-top: 10px;
+}
+
 .chart-div {
     max-width: 500px;
     max-height: 500px;

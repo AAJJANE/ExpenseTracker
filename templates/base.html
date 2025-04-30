@@ -31,8 +31,8 @@
                                     <a class="navbar-brand" href="{{ url_for('profile') }}">{{ current_user.name }}</a>
                                 {% else %}
                                     <p>
-                                        <a class="btn btn-primary" href="/register">Sign up</a>
-                                        <a class="btn btn-success" href="/login">Log in</a>
+                                        <a class="btn btn-primary" id="sign-up" href="/register">Sign up</a>
+                                        <a class="btn btn-success" id="login" href="/login">Log in</a>
                                     </p>
                                 {% endif %}
                             </div>
