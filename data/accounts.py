@@ -1,10 +1,5 @@
-from datetime import datetime
-import sys
-
 import sqlalchemy as sa
-from sqlalchemy import orm
-
-from .__db_session import SqlAlchemyBase, create_session
+from .__db_session import SqlAlchemyBase
 
 
 class Accounts(SqlAlchemyBase):

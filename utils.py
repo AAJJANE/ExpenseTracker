@@ -12,7 +12,8 @@ def format_amount(data):
     return res
 
 
-def create_chart(label, data, background_col, labels, chart_type_user, border_width=2, border_color='rgb(188, 205, 228)'):
+def create_chart(label, data, background_col, labels, chart_type_user, border_width=2,
+                 border_color='rgb(188, 205, 228)'):
     dataset = Dataset(
         label=label,
         data=data,
@@ -28,6 +29,7 @@ def create_chart(label, data, background_col, labels, chart_type_user, border_wi
     )
 
     return chart
+
 
 def generate_color(n):
     colors = []

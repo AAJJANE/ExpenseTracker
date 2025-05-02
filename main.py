@@ -2,12 +2,10 @@ import asyncio
 import datetime
 import os
 from threading import Thread
-
 from flask import Flask, render_template, request, redirect, abort, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from sqlalchemy import func
 from werkzeug.utils import secure_filename
-
 from ai import ai_review_async
 from data import __db_session as db_session
 from data.accounts import Accounts
@@ -25,19 +23,18 @@ login_manager.init_app(app)
 
 ai_cache = {}
 
+
 def run_async_task(user_id, incomes, expenses):
     async def task_wrapper():
         result = await ai_review_async(incomes, expenses)
         ai_cache[user_id] = result
+
     asyncio.run(task_wrapper())
 
-@app.route('/home')
-@login_required
-def index():
-    db_sess = db_session.create_session()
-    accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
-    ai_cache.clear()
-    return render_template('index.html', title='Finance Tracker', accounts=accounts)
+
+@login_manager.user_loader
+def load_user(user_id: id) -> User | None:
+    return db_session.create_session().get(User, user_id)
 
 
 @app.route('/')
@@ -51,6 +48,72 @@ def start():
 @app.errorhandler(401)
 def unauthorized(error):
     return render_template('unauthorized.html', title='Unauthorized')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    ai_cache.clear()
+    form = LoginForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            flash("Logged in successfully!", 'success')
+            return redirect("/home")
+        return render_template('_base_form.html',
+                               message="Incorrect login credentials!",
+                               title='Error while logging in',
+                               form=form)
+    return render_template('_base_form.html', title='Log in', form=form)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    ai_cache.clear()
+    logout_user()
+    flash("Logged out successfully", 'success')
+    return redirect("/login")
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        profile_picture_file = form.pfp.data
+
+        picture_filename = 'default_pfp.png'
+        if profile_picture_file:
+            original_filename = secure_filename(profile_picture_file.filename)
+            extension = os.path.splitext(original_filename)[1]
+            picture_filename = f"user{db_sess.query(User).order_by(User.id.desc()).first().id}{extension}"
+            picture_path = os.path.join(app.root_path, 'static', 'img', picture_filename)
+            profile_picture_file.save(picture_path)
+
+        user = User(
+            surname=form.surname.data,
+            name=form.name.data,
+            age=form.age.data,
+            email=form.email.data,
+            pfp=picture_filename,
+        )
+        user.set_password(form.password.data)
+        db_sess.add(user)
+        db_sess.commit()
+        flash("Registered successfully!", 'success')
+        return redirect('/login')
+    return render_template('_base_form.html', title='Sign up', form=form)
+
+
+@app.route('/home')
+@login_required
+def index():
+    db_sess = db_session.create_session()
+    accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
+    ai_cache.clear()
+    return render_template('index.html', title='Finance Tracker', accounts=accounts)
 
 
 @app.route('/dashboard')
@@ -140,6 +203,7 @@ def dashboard():
                            ai_summary=ai_cache.get(current_user.id),
                            title='Dashboard', )
 
+
 @app.route('/get_ai_summary')
 @login_required
 def get_ai_summary():
@@ -213,66 +277,12 @@ def account_delete(_id):
     return redirect('/home')
 
 
-@login_manager.user_loader
-def load_user(user_id: id) -> User | None:
-    return db_session.create_session().get(User, user_id)
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    ai_cache.clear()
-    form = LoginForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.email == form.email.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            flash("Logged in successfully!", 'success')
-            return redirect("/home")
-        return render_template('_base_form.html',
-                               message="Incorrect login credentials!",
-                               title='Error while logging in',
-                               form=form)
-    return render_template('_base_form.html', title='Log in', form=form)
-
-
-@app.route('/logout')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
-def logout():
-    ai_cache.clear()
-    logout_user()
-    flash("Logged out successfully", 'success')
-    return redirect("/login")
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm()
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        profile_picture_file = form.pfp.data
-
-        picture_filename = 'default_pfp.png'
-        if profile_picture_file:
-            original_filename = secure_filename(profile_picture_file.filename)
-            extension = os.path.splitext(original_filename)[1]
-            picture_filename = f"user{db_sess.query(User).order_by(User.id.desc()).first().id}{extension}"
-            picture_path = os.path.join(app.root_path, 'static', 'img', picture_filename)
-            profile_picture_file.save(picture_path)
-
-        user = User(
-            surname=form.surname.data,
-            name=form.name.data,
-            age=form.age.data,
-            email=form.email.data,
-            pfp=picture_filename,
-        )
-        user.set_password(form.password.data)
-        db_sess.add(user)
-        db_sess.commit()
-        flash("Registered successfully!", 'success')
-        return redirect('/login')
-    return render_template('_base_form.html', title='Sign up', form=form)
+def profile():
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == current_user.id).first()
+    return render_template('profile.html', user=user, title='Your profile')
 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
@@ -310,14 +320,6 @@ def edit_profile():
         flash("Edited profile successfully!", 'success')
         return redirect('/profile')
     return render_template('_base_form.html', title='Editing profile', form=form, pfp=user.pfp)
-
-
-@app.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == current_user.id).first()
-    return render_template('profile.html', user=user, title='Your profile')
 
 
 @app.route('/extra_login', methods=['GET', 'POST'])

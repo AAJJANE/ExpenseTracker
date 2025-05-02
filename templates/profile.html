@@ -4,29 +4,29 @@
 <h1 class="text-center">Your profile</h1>
 <div class="container mt-4" style="display: flex; justify-content: center; align-items: center">
 
-    <div >
+    <div>
         <img src="{{ url_for('static', filename='img/' ~ user.pfp) }}" alt="Profile Picture" width="200">
     </div>
     <table class="table">
-            <tbody>
-            <tr>
-                <td class="text-center">Name: </td>
-                <td>{{ user.name }}</td>
-            </tr>
-            <tr>
-                <td class="text-center">Surname: </td>
-                <td>{{ user.surname }}</td>
-            </tr>
-            <tr>
-                <td class="text-center">Age: </td>
-                <td>{{ user.age }}</td>
-            </tr>
-            <tr>
-                <td class="text-center">Email: </td>
-                <td>{{ user.email }}</td>
-            </tr>
+        <tbody>
+        <tr>
+            <td class="text-center">Name:</td>
+            <td>{{ user.name }}</td>
+        </tr>
+        <tr>
+            <td class="text-center">Surname:</td>
+            <td>{{ user.surname }}</td>
+        </tr>
+        <tr>
+            <td class="text-center">Age:</td>
+            <td>{{ user.age }}</td>
+        </tr>
+        <tr>
+            <td class="text-center">Email:</td>
+            <td>{{ user.email }}</td>
+        </tr>
         </tbody>
-        </table>
+    </table>
     <a href="/edit_profile" class="btn btn-primary" id="edit-btn">Edit your profile</a>
     <a href="/logout" class="btn btn-danger" style="display:block;">Log out</a>
 </div>
