@@ -3,6 +3,13 @@
 {% block content %}
 <div class="col-sm-10 ml-auto mr-auto ">
     <H2>Accounts History</H2>
+
+    <div>
+        <a onclick="showDeleteModal1()" class="btn btn-danger">
+            Remove all data
+        </a>
+    </div>
+
     <table class="table">
         <thead class="thead-dark">
         <tr>
@@ -19,7 +26,7 @@
             <td>{{entry.date.strftime("%m-%d-%Y")}}</td>
             <td>{{entry.type}}</td>
             <td>{{ entry.category }}</td>
-            <td>{{ (entry.amount|round(2)|string).rstrip('.0') }}</td>
+            <td>{{ (entry.amount|round(2)|string) }}</td>
             <td>
                 <div>
                     <a href="/accounts/{{ entry.id }}" class="btn btn-warning">
@@ -38,12 +45,12 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="deleteModalLabel">Removing a record</h1>
+                    <h1 class="modal-title fs-5" id="deleteModalLabel">Removing records</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <span id="deleteModalId" style="display: none">%id%</span>
-                    <p>Do you really want to remove this record?</p>
+                    <p>Do you really want to proceed?</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -51,6 +58,9 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="modal fade" id="deleteModal1" tabindex="-1" aria-labelledby="deleteModal1Label" aria-hidden="true">
     </div>
 
 </div>
@@ -63,6 +73,14 @@
         document.getElementById('deleteModalBtn').setAttribute('href', `/account_delete/${id}`);
         deleteModal.show();
     }
+
+    const deleteModal1 = new bootstrap.Modal(document.getElementById('deleteModal1'));
+
+    function showDeleteModal1() {
+        document.getElementById('deleteModalBtn').setAttribute('href', `/accounts_delete/`);
+        deleteModal.show();
+    }
+
 </script>
 
 {% endblock %}

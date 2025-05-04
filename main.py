@@ -60,6 +60,7 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             flash("Logged in successfully!", 'success')
+            db_sess.close()
             return redirect("/home")
         return render_template('_base_form.html',
                                message="Incorrect login credentials!",
@@ -103,6 +104,7 @@ def register():
         db_sess.add(user)
         db_sess.commit()
         flash("Registered successfully!", 'success')
+        db_sess.close()
         return redirect('/login')
     return render_template('_base_form.html', title='Sign up', form=form)
 
@@ -113,6 +115,7 @@ def index():
     db_sess = db_session.create_session()
     accounts = db_sess.query(Accounts).filter(Accounts.user == current_user.id).order_by(Accounts.date.asc()).all()
     ai_cache.clear()
+    db_sess.close()
     return render_template('index.html', title='Finance Tracker', accounts=accounts)
 
 
@@ -194,6 +197,8 @@ def dashboard():
             income_expense_ratio[0][0]
         )).start()
 
+    db_sess.close()
+
     return render_template("chart.html",
                            charts_html1=chart1,
                            charts_html2=chart2,
@@ -233,6 +238,7 @@ def add_account():
             db_sess.merge(account)
             db_sess.commit()
             flash("Account added successfully!", 'success')
+            db_sess.close()
             return redirect('/home')
     return render_template('_base_form.html', title='Add an account', form=form)
 
@@ -251,6 +257,7 @@ def edit_account(_id):
         form.category.data = account.category
         form.date.data = account.date
         form.amount.data = account.amount
+        db_sess.close()
         return render_template('_base_form.html', title='Editing an account', form=form)
     if form.validate() and request.method == 'POST':
         account.type = form.type.data
@@ -260,6 +267,7 @@ def edit_account(_id):
         db_sess.merge(account)
         db_sess.commit()
         flash("Account edited successfully!", 'success')
+        db_sess.close()
         return redirect('/home')
 
 
@@ -273,6 +281,19 @@ def account_delete(_id):
         abort(404)
     db_sess.delete(account)
     db_sess.commit()
+    db_sess.close()
+    flash("Account deleted successfully!", 'success')
+    return redirect('/home')
+
+
+@app.route('/accounts_delete/')
+@login_required
+def accounts_delete():
+    ai_cache.clear()
+    db_sess = db_session.create_session()
+    db_sess.query(Accounts).filter(Accounts.user == current_user.id).delete()
+    db_sess.commit()
+    db_sess.close()
     flash("Account deleted successfully!", 'success')
     return redirect('/home')
 
@@ -282,6 +303,7 @@ def account_delete(_id):
 def profile():
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.id == current_user.id).first()
+    db_sess.close()
     return render_template('profile.html', user=user, title='Your profile')
 
 
@@ -298,6 +320,7 @@ def edit_profile():
         form.name.data = user.name
         form.age.data = user.age
         form.email.data = user.email
+        db_sess.close()
         return render_template('_base_form.html', title='Editing profile', form=form, pfp=user.pfp)
     if form.validate() and request.method == 'POST':
         profile_picture_file = form.pfp.data
