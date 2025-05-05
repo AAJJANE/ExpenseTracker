@@ -12,6 +12,7 @@ from data.accounts import Accounts
 from data.users import User
 from forms import (LoginForm, ExtraLoginForm, RegisterForm)
 from forms.accountform import AddAccountForm
+from forms.periodform import PeriodForm
 from utils import format_amount, create_chart, generate_color
 
 app = Flask(__name__)
@@ -119,30 +120,58 @@ def index():
     return render_template('index.html', title='Finance Tracker', accounts=accounts)
 
 
-@app.route('/dashboard')
+@app.route('/period', methods=['GET', 'POST'])
 @login_required
-def dashboard():
+def period():
+    ai_cache.clear()
+    form = PeriodForm()
+    if form.validate_on_submit():
+        start = datetime.datetime.strptime(form.start_date.data.strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+        end = datetime.datetime.strptime(form.end_date.data.strftime('%Y-%m-%d'), '%Y-%m-%d').date()
+        if (datetime.date.today() < start or
+                datetime.date.today() < end or
+                start > end):
+            flash("Invalid dates range!", 'danger')
+            return render_template('_base_form.html', title='Choosing period for graphs', form=form)
+        else:
+            flash("Time period chosen successfully!", 'success')
+            start_date = form.start_date.data.strftime('%Y-%m-%d')
+            end_date = form.end_date.data.strftime('%Y-%m-%d')
+            return redirect(f'dashboard/{start_date}/{end_date}')
+    return render_template('_base_form.html', title='Choosing period for graphs', form=form)
+
+
+@app.route('/dashboard/<start_date>/<end_date>')
+@login_required
+def dashboard(start_date, end_date):
+    print(start_date)
+    print(end_date)
     db_sess = db_session.create_session()
 
     # --- data ---
 
     income_expense_ratio = format_amount((db_sess.query(func.sum(Accounts.amount), Accounts.type)
-                                          .filter(Accounts.user == current_user.id).group_by(
+                                          .filter(Accounts.user == current_user.id,
+                                                  Accounts.date.between(start_date, end_date)).group_by(
         Accounts.type).order_by(Accounts.type).all()))
 
     incomes = format_amount((db_sess.query(func.sum(Accounts.amount), Accounts.category)
-                             .filter(Accounts.user == current_user.id, Accounts.type == 'income').group_by(
+                             .filter(Accounts.user == current_user.id, Accounts.type == 'income',
+                                     Accounts.date.between(start_date, end_date)).group_by(
         Accounts.category).order_by(Accounts.category).all()))
 
     expenses = format_amount((db_sess.query(func.sum(Accounts.amount), Accounts.category)
-                              .filter(Accounts.user == current_user.id, Accounts.type == 'expense').group_by(
+                              .filter(Accounts.user == current_user.id, Accounts.type == 'expense',
+                                      Accounts.date.between(start_date, end_date)).group_by(
         Accounts.category).order_by(Accounts.category).all()))
 
     dates_income = (db_sess.query(func.sum(Accounts.amount), Accounts.date)
-                    .filter(Accounts.user == current_user.id, Accounts.type == 'income').group_by(
+                    .filter(Accounts.user == current_user.id, Accounts.type == 'income',
+                            Accounts.date.between(start_date, end_date)).group_by(
         Accounts.date).order_by(Accounts.date).all())
     dates_expense = (db_sess.query(func.sum(Accounts.amount), Accounts.date)
-                     .filter(Accounts.user == current_user.id, Accounts.type == 'expense').group_by(
+                     .filter(Accounts.user == current_user.id, Accounts.type == 'expense',
+                             Accounts.date.between(start_date, end_date)).group_by(
         Accounts.date).order_by(Accounts.date).all())
 
     over_time_incomes = []

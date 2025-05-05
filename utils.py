@@ -18,6 +18,7 @@ def create_chart(label, data, background_col, labels, chart_type_user, border_wi
         label=label,
         data=data,
         backgroundColor=background_col,
+        hoverBackgroundColor=border_color,
         borderWidth=border_width,
         borderColor=border_color
     )

@@ -1,62 +1,62 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container">
-    <div id="ai-summary">
-        {{ ai_summary if ai_summary else "AI summary is loading..." }}
+    <div class="container">
+        <div id="ai-summary">
+            {{ ai_summary if ai_summary else "AI summary is loading..." }}
+        </div>
+        <div class="row">
+            <div class="col-md">
+                <h1>Incomes to Expenses Ratio</h1>
+                <div id="chart-container1" class="chart-div">
+                    {{ charts_html1 |safe }}
+                </div>
+            </div>
+            <div class="col-md">
+                <h1 align="center">Incomes in a time period</h1>
+                <div id="chart-container2" class="chart-div1">
+                    {{ charts_html2 |safe }}
+                </div>
+            </div>
+        </div>
     </div>
     <div class="row">
         <div class="col-md">
-            <h1>Incomes to Expenses Ratio</h1>
-            <div id="chart-container1" class="chart-div">
-                {{ charts_html1 |safe }}
+            <h1 align="center">Expenses in a time period</h1>
+            <div id="chart-container3" class="chart-div2">
+                {{ charts_html3 |safe }}
             </div>
         </div>
         <div class="col-md">
-            <h1 align="center">Incomes in a time period</h1>
-            <div id="chart-container2" class="chart-div1">
-                {{ charts_html2 |safe }}
+            <h1 align="center">Categories of Income</h1>
+            <div id="chart-container4" class="chart-div2">
+                {{ charts_html4 |safe }}
             </div>
         </div>
     </div>
-</div>
-<div class="row">
-    <div class="col-md">
-        <h1 align="center">Expenses in a time period</h1>
-        <div id="chart-container3" class="chart-div2">
-            {{ charts_html3 |safe }}
+    <div class="row" align="center">
+        <div class="col-md">
+            <h1 align="center">Categories of Expense</h1>
+            <div id="chart-container5" class="chart-div3">
+                {{ charts_html5 |safe }}
+            </div>
         </div>
     </div>
-    <div class="col-md">
-        <h1 align="center">Categories of Income</h1>
-        <div id="chart-container4" class="chart-div2">
-            {{ charts_html4 |safe }}
-        </div>
-    </div>
-</div>
-<div class="row" align="center">
-    <div class="col-md">
-        <h1 align="center">Categories of Expense</h1>
-        <div id="chart-container5" class="chart-div3">
-            {{ charts_html5 |safe }}
-        </div>
-    </div>
-</div>
-<script>
+    <script>
 
-    function pollAISummary() {
-        fetch('/get_ai_summary')
-            .then(response => response.json())
-            .then(data => {
-                if (data.summary !== "Summary is being generated...") {
-                    document.getElementById('ai-summary').innerHTML = data.summary;
-                } else {
-                    setTimeout(pollAISummary, 1000);
-                }
-            });
-    }
+        function pollAISummary() {
+            fetch('/get_ai_summary')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.summary !== "Summary is being generated...") {
+                        document.getElementById('ai-summary').innerHTML = data.summary;
+                    } else {
+                        setTimeout(pollAISummary, 1000);
+                    }
+                });
+        }
 
-    window.addEventListener('load', pollAISummary);
-</script>
+        window.addEventListener('load', pollAISummary);
+    </script>
 
 {% endblock %}
