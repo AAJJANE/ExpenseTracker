@@ -2,6 +2,7 @@
 
 {% block content %}
     <div class="container">
+        <h3>Showing results from {{ start_date }} till {{ end_date }}</h3>
         <div id="ai-summary">
             {{ ai_summary if ai_summary else "AI summary is loading..." }}
         </div>

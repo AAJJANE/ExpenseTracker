@@ -10,7 +10,8 @@ async def ai_review_async(incomes, expenses):
                                 Your response must be addressed to the user.
                                 Do not use any currencies in your response!
                                 Again, NO CURRENCIES IN YOUR RESPONSE!!!
-                                But if you have them, then make it Russian ruble"""
+                                But if you have them, then make it Russian ruble.
+                                Do not include user's name in your response."""
 
     payload = {
         "model": MODEL,

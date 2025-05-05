@@ -144,8 +144,6 @@ def period():
 @app.route('/dashboard/<start_date>/<end_date>')
 @login_required
 def dashboard(start_date, end_date):
-    print(start_date)
-    print(end_date)
     db_sess = db_session.create_session()
 
     # --- data ---
@@ -235,7 +233,9 @@ def dashboard(start_date, end_date):
                            charts_html4=chart4,
                            charts_html5=chart5,
                            ai_summary=ai_cache.get(current_user.id),
-                           title='Dashboard', )
+                           title='Dashboard',
+                           start_date=start_date,
+                           end_date=end_date)
 
 
 @app.route('/get_ai_summary')
