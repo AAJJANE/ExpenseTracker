@@ -7,3 +7,4 @@ pychartjs==1.0.0
 requests==2.32.3
 SQLAlchemy==2.0.29
 WTForms==3.2.1
+email_validator==2.2.0
